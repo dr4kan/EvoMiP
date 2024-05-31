@@ -150,9 +150,6 @@ class GWO(Algorithm):
                     self.costHistory.resize(nIter+1)
                     break
 
-        self.population.sort()
-        print(self.population)
-
         # write the results
         self.result = OptResult("GWO", nIter, self.population.size, self.population.config,
                                 self.population.bestSolution, self.population.searchSpace.parameters)

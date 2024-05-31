@@ -9,20 +9,24 @@ from evomip.Population import Population
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class WOAPopulation(Population):
+class MFOPopulation(Population):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, population: Population) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
         self.a: float = 0.
-        self.a2: float = 0. 
+        self.b: float = 1.
+        self.n_flame: int = 0
+        self.flames = copy.deepcopy(self.solutions)
+        self.flames.sort(key=lambda x: x.cost, reverse=False)
 
+    
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def updateParameters(self, t: int, nmax_iter: int) -> None:
-        self.a  = 2. - t*(2./nmax_iter)
-        self.a2 = -1. + t*((-1.)/nmax_iter)
-        
-        
+        self.a       = -1. + t*(-1./nmax_iter)
+        self.n_flame = round(self.size - t*((self.size - 1.)/nmax_iter))
+
+
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def evaluate(self) -> None:
         for i in range(0, self.size):
@@ -37,58 +41,46 @@ class WOAPopulation(Population):
         if (self.solutions[i].cost < self.bestSolution.cost):
             if (self.checkViolateConstraints(i) == False):
                 self.bestSolution = copy.deepcopy(self.solutions[i])
-
+                
+                
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def moveWhales(self) -> None:
-        r1, r2, A, C, b, l, p, D_tmp, D_best, distance = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        rw = 0
+    def moveMoths(self) -> None:
+        d_flame, r = 1., 1.
 
-        # Loop on the population of whales
+        # Loop on the population of moths
         for i in range(0, self.size):
-
-            r1 = self.rand()
-            r2 = self.rand()
-            A  = 2*self.a*r1-self.a
-            C  = 2*r2
-            b  = 1.
-            l  = (self.a2-1)*self.rand()+1
-            p  = self.rand()
 
             # Loop on dimension
             for j in range(0, self.searchSpace.dimension):
+                    
+                d_flame = abs(self.flames[i][j] - self.solutions[i][j])
+                r       = (self.a - 1.)*self.rand() + 1.
 
-                if (p < 0.5):
-
-                    if (abs(A) >= 1):
-                        # random whale
-                        rw             = self.randomInt(0, self.size)
-                        tmp            = self.solutions[rw]
-                        D_tmp          = abs(C*tmp[j] - self.solutions[i][j])
-                        self.solutions[i][j] = tmp[j] - A*D_tmp
-
-                    else:
-                        # encircling prey
-                        D_best         = abs(C*self.bestSolution[j] - self.solutions[i][j])
-                        self.solutions[i][j] = self.bestSolution[j]-A*D_best
-
+                if (i <= self.n_flame):
+                    self.solutions[i][j] = d_flame*math.exp(self.b*r)*math.cos(r*2*math.pi) + self.flames[i][j]
                 else:
-                    # distance whale to the prey
-                    distance       = abs(self.bestSolution[j] - self.solutions[i][j])
-                    self.solutions[i][j] = distance*math.exp(b*l)*math.cos(l*2*math.pi) + self.bestSolution[j]
-
+                    self.solutions[i][j] = d_flame*math.exp(self.b*r)*math.cos(r*2*math.pi) + self.flames[self.n_flame][j]
+                
             # boundary check
             self.checkBoundary(i)
+            
+            # combine moths with flames and sort them
+            self.flames = self.flames + self.solutions
+            self.flames.sort(key=lambda x: x.cost, reverse=False)
+
+            # keep the best
+            self.flames = self.flames[:len(self.solutions)]
 
 
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class WOA(Algorithm):
+class MFO(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, obj_function, population: Population) -> None:
         super().__init__(obj_function)
-        self.population = WOAPopulation(population)
+        self.population = MFOPopulation(population)
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -119,8 +111,8 @@ class WOA(Algorithm):
             # update the a parameter
             self.population.updateParameters(nIter, maxIter)
 
-            # move the whales
-            self.population.moveWhales()
+            # move the moths
+            self.population.moveMoths()
 
             # Evaluate the cost for the population
             self.population.evaluate()
@@ -145,7 +137,6 @@ class WOA(Algorithm):
                     break
 
         # write the results
-        self.result = OptResult("WOA", nIter, self.population.size, self.population.config,
+        self.result = OptResult("MFO", nIter, self.population.size, self.population.config,
                                 self.population.bestSolution, self.population.searchSpace.parameters)
         
-
