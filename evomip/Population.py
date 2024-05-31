@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import copy
 
 from evomip.SearchSpace import SearchSpace
 from evomip.Individual import Individual
@@ -182,24 +181,8 @@ class Population:
             self.solutions[i].cost = np.inf
         else:
             self.solutions[i].cost = self.objectiveFunction(self.solutions[i].position)
-
-    
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def evaluate(self) -> None:
-        for i in range(0, self.size):
-            self.evalSolution(i)
             
-
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def evalSolution(self, i: int) -> None:
-        self.evaluateCost(i)
-        
-        # check is the solution violates the constraints
-        if (self.solutions[i].cost < self.bestSolution.cost):
-            if (self.checkViolateConstraints(i) == False):
-                self.bestSolution = copy.deepcopy(self.solutions[i])
-
-
+         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def evaluateCost(self, i: int) -> None:
 
@@ -222,8 +205,8 @@ class Population:
             if (self.checkViolateConstraints(i)):
                 self.solutions[i] = Individual(self.searchSpace.random())
                 self.solutions[i].cost = self.objectiveFunction(self.solutions[i].position)
-    
-                                            
+
+                                   
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __repr__(self) -> str:
         out = ""

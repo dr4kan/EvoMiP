@@ -9,20 +9,21 @@ from evomip.Population import Population
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class WOAPopulation(Population):
+class GWOPopulation(Population):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, population: Population) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
         self.a: float = 0.
-        self.a2: float = 0. 
+        self.alpha = self.solutions[0]
+        self.beta  = self.solutions[1]
+        self.delta = self.solutions[2]
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def updateParameters(self, t: int, nmax_iter: int) -> None:
-        self.a  = 2. - t*(2./nmax_iter)
-        self.a2 = -1. + t*((-1.)/nmax_iter)
-        
-        
+        self.a = 2 - t*(2./nmax_iter)
+
+
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def evaluate(self) -> None:
         for i in range(0, self.size):
@@ -33,49 +34,54 @@ class WOAPopulation(Population):
     def evalSolution(self, i: int) -> None:
         self.evaluateCost(i)
         
+        # update the alpha, beta and delta wolves
+        if (self.solutions[i].cost < self.alpha.cost):
+            self.alpha = self.solutions[i]
+        elif (self.solutions[i].cost < self.beta.cost):
+            self.beta = self.solutions[i]
+        elif (self.solutions[i].cost < self.delta.cost):
+            self.delta = self.solutions[i]
+        
         # check is the solution violates the constraints
         if (self.solutions[i].cost < self.bestSolution.cost):
             if (self.checkViolateConstraints(i) == False):
                 self.bestSolution = copy.deepcopy(self.solutions[i])
-
+                
+                
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def moveWhales(self) -> None:
-        r1, r2, A, C, b, l, p, D_tmp, D_best, distance = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        rw = 0
+    def moveWolves(self) -> None:
+        r1, r2, A, C, D_alpha = 0., 0., 0., 0., 0.
+        D_beta, D_delta, X1, X2, X3 = 0., 0., 0., 0., 0.
 
-        # Loop on the population of whales
+        # Loop on the population of wolves
         for i in range(0, self.size):
-
-            r1 = self.rand()
-            r2 = self.rand()
-            A  = 2*self.a*r1-self.a
-            C  = 2*r2
-            b  = 1.
-            l  = (self.a2-1)*self.rand()+1
-            p  = self.rand()
 
             # Loop on dimension
             for j in range(0, self.searchSpace.dimension):
+                
+                r1 = self.rand()
+                r2 = self.rand()
+                A  = 2*self.a*r1-self.a
+                C  = 2*r2
+                D_alpha = abs(C*self.alpha[j]-self.solutions[i][j])
+                X1 = self.alpha[j]-A*D_alpha
 
-                if (p < 0.5):
+                r1 = self.rand()
+                r2 = self.rand()
+                A  = 2*self.a*r1-self.a
+                C  = 2*r2
+                D_beta = abs(C*self.beta[j]-self.solutions[i][j])
+                X2 = self.beta[j]-A*D_beta
+                
+                r1 = self.rand()
+                r2 = self.rand()
+                A  = 2*self.a*r1-self.a
+                C  = 2*r2
+                D_delta = abs(C*self.delta[j]-self.solutions[i][j])
+                X3 = self.delta[j]-A*D_delta
 
-                    if (abs(A) >= 1):
-                        # random whale
-                        rw             = self.randomInt(0, self.size)
-                        tmp            = self.solutions[rw]
-                        D_tmp          = abs(C*tmp[j] - self.solutions[i][j])
-                        self.solutions[i][j] = tmp[j] - A*D_tmp
-
-                    else:
-                        # encircling prey
-                        D_best         = abs(C*self.bestSolution[j] - self.solutions[i][j])
-                        self.solutions[i][j] = self.bestSolution[j]-A*D_best
-
-                else:
-                    # distance whale to the prey
-                    distance       = abs(self.bestSolution[j] - self.solutions[i][j])
-                    self.solutions[i][j] = distance*math.exp(b*l)*math.cos(l*2*math.pi) + self.bestSolution[j]
-
+                self.solutions[i][j] = (X1+X2+X3)/3.
+                
             # boundary check
             self.checkBoundary(i)
 
@@ -83,12 +89,12 @@ class WOAPopulation(Population):
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class WOA(Algorithm):
+class GWO(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, obj_function, population: Population) -> None:
         super().__init__(obj_function)
-        self.population = WOAPopulation(population)
+        self.population = GWOPopulation(population)
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -120,7 +126,7 @@ class WOA(Algorithm):
             self.population.updateParameters(nIter, maxIter)
 
             # move the whales
-            self.population.moveWhales()
+            self.population.moveWolves()
 
             # Evaluate the cost for the population
             self.population.evaluate()
@@ -148,7 +154,6 @@ class WOA(Algorithm):
         print(self.population)
 
         # write the results
-        self.result = OptResult("WOA", nIter, self.population.size, self.population.config,
+        self.result = OptResult("GWO", nIter, self.population.size, self.population.config,
                                 self.population.bestSolution, self.population.searchSpace.parameters)
         
-
