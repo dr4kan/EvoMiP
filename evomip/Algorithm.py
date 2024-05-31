@@ -1,10 +1,15 @@
-from Population import *
-from Config import *
-import math
-from tqdm import tqdm
 from matplotlib import pyplot as plt
 from dataclasses import dataclass
+import numpy as np
 
+from evomip.Population import Population
+from evomip.Config import Config
+from evomip.Individual import Individual
+from evomip.Parameter import Parameter
+
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 @dataclass
 class OptResult:
     algo: str
@@ -23,6 +28,7 @@ class OptResult:
         self.config = config
         self.bestSolution = bestSolution
         self.parameters = parameters
+
 
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

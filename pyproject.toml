@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "evomip"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Davide Pagano <davide.pagano@unibs.it>"]
 readme = "README.md"
