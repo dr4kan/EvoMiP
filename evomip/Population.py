@@ -69,17 +69,25 @@ class Population:
     
     
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def uniform(self, a: float, b: float) -> float:
+        return random.uniform(a, b)
+    
+    
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def randomInt(self, minVal: int, maxVal: int) -> int:
         return random.randint(minVal, maxVal-1)
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def initRandom(self) -> None:
-        #if (gSilent == False):
-        print("Generating the initial population...\n")
-
+        self.n_valid_solutions = 0
         for i in range(0, self.size):
             self.solutions[i] = Individual(self.searchSpace.random())
+            if (self.checkViolateConstraints(i) == False):
+                self.n_valid_solutions += 1
+                
+        if (self.n_valid_solutions < self.config.min_valid_solutions):
+            self.initRandom()
 
         self.evaluate()
         self.isInitialized = True
@@ -88,7 +96,8 @@ class Population:
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/  
     def sort(self) -> None:
         self.solutions.sort(key=lambda x: x.cost, reverse=False)
-             
+
+    
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def checkViolateConstraints(self, i: int) -> bool:
         for constraint in self.searchSpace.constraints:

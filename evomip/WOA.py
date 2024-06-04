@@ -38,6 +38,7 @@ class WOAPopulation(Population):
             if (self.checkViolateConstraints(i) == False):
                 self.bestSolution = copy.deepcopy(self.solutions[i])
 
+
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def moveWhales(self) -> None:
         r1, r2, A, C, b, l, p, D_tmp, D_best, distance = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
@@ -97,11 +98,13 @@ class WOA(Algorithm):
 
         # if the population is not initialized, do it randomly
         if (self.population.isInitialized == False):
+            if (self.population.config.silent == False):
+                print("Generating the initial population...\n")
             self.population.initRandom() # also evaluate
         else:
             # Evaluate the cost for the population
             self.population.evaluate()
-
+        
         # Update the cost history
         self.costHistory = np.append(self.costHistory, self.population.bestSolution.cost)
 

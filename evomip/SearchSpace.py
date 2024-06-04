@@ -1,5 +1,5 @@
 import random
-import numpy
+import numpy as np
 
 from evomip.Parameter import Parameter
 from evomip.Constraint import Constraint
@@ -14,9 +14,7 @@ class SearchSpace:
         self.dimension = len(parameters)
         self.parameters = parameters
         self.constraints = constraints
-        self.gen_point = numpy.empty(self.dimension)
-        self.constr_init_pop = False
-
+        
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def setSeed(self, t_seed: int) -> None:
@@ -24,16 +22,11 @@ class SearchSpace:
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def setCostrInitPop(self, t: bool) -> None:
-        self.constr_init_pop = t
-
-
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def ckeckConstraint(self) -> bool:
+    def violateConstraints(self, gen_point: np.array) -> bool:
         for constraint in self.constraints:
             g = constraint.func
             inequality = constraint.inequality
-            tmp_d = g(self.gen_point)
+            tmp_d = g(gen_point)
 
             if (inequality == "<" and tmp_d >= 0):
                 return True
@@ -53,17 +46,13 @@ class SearchSpace:
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def random(self) -> numpy.array:
+    def random(self) -> np.array:
+        gen_point = np.zeros(self.dimension)
+        
         for i in range(0, self.dimension):
-            self.gen_point[i] = self.randomParameter(i)
+            gen_point[i] = self.randomParameter(i)
 
-        # in case of a constrained optimization, check is
-        # the solution violates any constraint
-        if (self.constr_init_pop == True):
-            if (self.ckeckConstraint()): 
-                return self.random()
-
-        return self.gen_point
+        return gen_point
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

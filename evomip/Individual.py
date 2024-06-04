@@ -8,7 +8,7 @@ class Individual:
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, position: np.array) -> None:
         self.position = np.copy(position)
-        self.velocity = np.empty(position.size)
+        self.velocity = np.zeros(position.size)
         self.hasVelocity = False
         self.cost = np.inf
     

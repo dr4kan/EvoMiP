@@ -89,6 +89,8 @@ class MFO(Algorithm):
 
         # if the population is not initialized, do it randomly
         if (self.population.isInitialized == False):
+            if (self.population.config.silent == False):
+                print("Generating the initial population...\n")
             self.population.initRandom() # also evaluate
         else:
             # Evaluate the cost for the population

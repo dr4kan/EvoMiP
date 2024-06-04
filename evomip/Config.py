@@ -63,13 +63,15 @@ class Config:
     penalty_coeff: float
     penalty_scaling: float
     max_penalty_param: float
+    min_valid_solutions: int
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, nmax_iter: int = 100, nmax_iter_same_cost: int = 0, 
-                 same_cost_rel_tol: float = 1.e-8, silent: bool = True,
+                 same_cost_rel_tol: float = 1.e-8, silent: bool = False,
                  oobMethod: str = "RBC", constraintsMethod: str = "BAR",
                  penalty_coeff: float = 2., penalty_scaling: float = 10.,
-                 max_penalty_param: float = 1.e10, seed: int = 0) -> None:
+                 max_penalty_param: float = 1.e10, seed: int = 0,
+                 min_valid_solutions: int = 0) -> None:
         # general
         self.nmax_iter = nmax_iter
         self.nmax_iter_same_cost = nmax_iter_same_cost
@@ -86,6 +88,7 @@ class Config:
         self.penalty_coeff = penalty_coeff
         self.penalty_scaling = penalty_scaling
         self.max_penalty_param = max_penalty_param
+        self.min_valid_solutions = min_valid_solutions
         
         # seed
         self.seed = seed
