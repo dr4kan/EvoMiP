@@ -17,10 +17,26 @@ class WOAPopulation(Population):
         self.a: float = 0.
         self.a2: float = 0. 
 
+
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def updateParameters(self, t: int, nmax_iter: int) -> None:
         self.a  = 2. - t*(2./nmax_iter)
         self.a2 = -1. + t*((-1.)/nmax_iter)
+        
+        
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def initRandom(self) -> None:
+        self.n_valid_solutions = 0
+        for i in range(0, self.size):
+            self.solutions[i] = Individual(self.searchSpace.random())
+            if (self.checkViolateConstraints(i) == False):
+                self.n_valid_solutions += 1
+                
+        if (self.n_valid_solutions < self.config.min_valid_solutions):
+            self.initRandom()
+
+        self.evaluate()
+        self.isInitialized = True
         
         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

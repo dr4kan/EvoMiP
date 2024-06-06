@@ -22,18 +22,26 @@ class BATIndividual(Individual):
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 class BATPopulation(Population):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, population: Population) -> None:
+    def __init__(self, population: Population, initialLoudness: float, 
+                 alpha: float, initialPulseRate: float, gamma: float,
+                 fmin: float, fmax: float) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
-        self.solutions = [BATIndividual(np.empty(population.searchSpace.dimension))] * population.size
-        self.initialLoudness: float = 1.5   # Initial loudness
-        self.alpha: float = 0.95            # Parameter in [0, 1] to control how quickly the loudness changes
-        self.initialPulseRate: float = 0.5
-        self.gamma: float = 0.9
-        self.fmin: float = 0.  # Minimum frequency 
-        self.fmax: float = 2.  # Maximum frequency 
+        self.solutions = [BATIndividual(np.empty(self.searchSpace.dimension))] * self.size
+        self.initialLoudness = initialLoudness   # Initial loudness
+        self.alpha = alpha                       # Parameter in [0, 1] to control how quickly the loudness changes
+        self.initialPulseRate = initialPulseRate
+        self.gamma = gamma
+        self.fmin = fmin  # Minimum frequency 
+        self.fmax = fmax  # Maximum frequency 
         self.loudness = self.initialLoudness
         self.pulseRate = self.initialPulseRate * (1 - math.exp(-self.gamma))
+        
+        
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def updateParameters(self, t: int) -> None:
+        self.loudness = self.loudness * self.alpha
+        self.pulseRate = self.initialPulseRate * (1 - math.exp(-self.gamma * (t+1)))
         
         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -50,12 +58,6 @@ class BATPopulation(Population):
         
         self.evaluate()
         self.isInitialized = True
-
-
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def updateParameters(self, t: int) -> None:
-        self.loudness = self.loudness * self.alpha
-        self.pulseRate = self.initialPulseRate * (1 - math.exp(-self.gamma * (t+1)))
         
         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

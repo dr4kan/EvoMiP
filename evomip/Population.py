@@ -77,21 +77,6 @@ class Population:
     def randomInt(self, minVal: int, maxVal: int) -> int:
         return random.randint(minVal, maxVal-1)
 
-
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def initRandom(self) -> None:
-        self.n_valid_solutions = 0
-        for i in range(0, self.size):
-            self.solutions[i] = Individual(self.searchSpace.random())
-            if (self.checkViolateConstraints(i) == False):
-                self.n_valid_solutions += 1
-                
-        if (self.n_valid_solutions < self.config.min_valid_solutions):
-            self.initRandom()
-
-        self.evaluate()
-        self.isInitialized = True
-           
            
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/  
     def sort(self) -> None:
