@@ -66,9 +66,16 @@ class Algorithm:
         print("        OOB method | ", self.result.config.oobMethod, sep = "")
         print(" constraint method | ", self.result.config.constraintsMethod, sep = "")
         print("         best cost | ", self.result.bestSolution.cost, sep = "")
-        print("     best solution | ", self.result.parameters[0].name, " = ", self.result.bestSolution[0], sep = "")
+        if self.result.parameters[0].integer == True:
+            print("     best solution | ", self.result.parameters[0].name, " = ", int(self.result.bestSolution[0]), "  (int)", sep = "") 
+        else:
+            print("     best solution | ", self.result.parameters[0].name, " = ", self.result.bestSolution[0], sep = "")
+            
         for i in range(1, len(self.result.parameters)):
-            print("                   | ", self.result.parameters[i].name, " = ", self.result.bestSolution[i], sep = "")
+            if self.result.parameters[i].integer == True:
+                print("                   | ", self.result.parameters[i].name, " = ", int(self.result.bestSolution[i]), "  (int)", sep = "") 
+            else:
+                print("                   | ", self.result.parameters[i].name, " = ", self.result.bestSolution[i], sep = "")
         print("--------------------------------------------")
 
 

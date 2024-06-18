@@ -184,7 +184,7 @@ class Population:
         # loop on dimension
         for j in range(0, self.searchSpace.dimension):
             if (self.searchSpace[j].getIsInteger() == True):
-                self.solutions[i][j] = round(v[j]) # round the parameter
+                self.solutions[i][j] = round(self.solutions[i][j]) # round the parameter
                 if (self.solutions[i][j] < self.searchSpace[j].getMin()):
                     self.solutions[i][j] += 1
                 elif (self.solutions[i][j] > self.searchSpace[j].getMax()):
