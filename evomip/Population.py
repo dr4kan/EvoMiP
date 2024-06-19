@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import copy
 
 from evomip.SearchSpace import SearchSpace
 from evomip.Individual import Individual
@@ -79,8 +80,10 @@ class Population:
 
            
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/  
-    def sort(self) -> None:
+    def sort(self, assignBestSolution: bool = False) -> None:
         self.solutions.sort(key=lambda x: x.cost, reverse=False)
+        if (assignBestSolution == True):
+            self.bestSolution = copy.deepcopy(self.solutions[0])
 
     
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/

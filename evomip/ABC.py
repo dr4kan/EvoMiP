@@ -28,7 +28,7 @@ class ABCIndividual(Individual):
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 class ABCPopulation(Population):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, population: Population, employedFraction: float, nScouters: int = 1) -> None:
+    def __init__(self, population: Population, employedFraction: float, nScouters: int) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
         
