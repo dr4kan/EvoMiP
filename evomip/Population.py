@@ -75,6 +75,11 @@ class Population:
     
     
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def gauss(self, mu: float = 0., sigma: float = 1.) -> float:
+        return random.gauss(mu, sigma)
+    
+    
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def randomInt(self, minVal: int, maxVal: int) -> int:
         return random.randint(minVal, maxVal-1)
 
