@@ -10,52 +10,59 @@ from evomip.Individual import Individual
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class BATIndividual(Individual):
+class GAIndividual(Individual):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, position: np.array) -> None:
         super().__init__(position)
-        self.freq: float = 0.
-    
-    
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class BATPopulation(Population):
+        self.indicator: int = 0 # when 0 the cost needs to be revaluated
+        
+        
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, population: Population, initialLoudness: float, 
-                 alpha: float, initialPulseRate: float, gamma: float,
-                 fmin: float, fmax: float) -> None:
+    def setIndicatorUp(self):
+        self.indicator = 1
+
+
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def setIndicatorDown(self):
+        self.indicator = 0
+    
+    
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+class GAPopulation(Population):
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def __init__(self, population: Population, keep_fraction: float, 
+                 mutation_rate: float) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
-        self.solutions = [BATIndividual(np.empty(self.searchSpace.dimension))] * self.size
-        self.initialLoudness = initialLoudness   # Initial loudness
-        self.alpha = alpha                       # Parameter in [0, 1] to control how quickly the loudness changes
-        self.initialPulseRate = initialPulseRate
-        self.gamma = gamma
-        self.fmin = fmin  # Minimum frequency 
-        self.fmax = fmax  # Maximum frequency 
-        self.loudness = self.initialLoudness
-        self.pulseRate = self.initialPulseRate * (1 - math.exp(-self.gamma))
+        self.solutions = [GAIndividual(np.empty(self.searchSpace.dimension))] * self.size
+        self.keep_fraction = keep_fraction     # selection rate
+        self.mutation_rate = mutation_rate     # mutation rate
+                
+        # number of chromosomes that survives to selection
+        self.keep   = int(self.keep_fraction * self.size)
         
+        # vector of probabilities used in the Roulette Wheel selection
+        self.prob = []
         
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def updateParameters(self, t: int) -> None:
-        self.loudness = self.loudness * self.alpha
-        self.pulseRate = self.initialPulseRate * (1 - math.exp(-self.gamma * (t+1)))
-        
+        k = self.keep * (self.keep + 1) / 2
+        self.prob.append(self.keep / k)
+        for i in range(1, self.keep):
+            self.prob.append((self.keep - i + 1) / k + self.prob[i - 2])
+   
         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def initRandom(self) -> None:
         self.n_valid_solutions = 0
         for i in range(0, self.size):
-            self.solutions[i] = BATIndividual(self.searchSpace.random())
-            self.solutions[i].freq = self.uniform(self.fmin, self.fmax)
+            self.solutions[i] = GAIndividual(self.searchSpace.random())
             if (self.checkViolateConstraints(i) == False):
                 self.n_valid_solutions += 1
                 
         if (self.n_valid_solutions < self.config.min_valid_solutions):
             self.initRandom()
-        
+
         self.evaluate()
         self.isInitialized = True
         
@@ -77,63 +84,50 @@ class BATPopulation(Population):
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def moveBats(self) -> None:
-        update_p: bool = False
-        update_l: bool = False
-        # we add a temporary solution in first position
-        self.solutions.insert(0, BATIndividual(self.searchSpace.random()))
+    def crossover(self):
+        # generate offspring
+        for i in range(0, self.size - self.keep, 2):
+            self.solutions[self.size - 1 - i].setIndicatorDown()
+            self.solutions[self.size - 2 - i].setIndicatorDown()
+            ma = 0 
+            pa = 0
 
-        # Loop on the population of bats
-        for i in range(1, self.size):
+            # mother and father
+            ra1 = self.rand()
+            ra2 = self.rand()
+            for u in range(1, self.keep):
+                if (ra1 > self.prob[u - 1] and ra1 <= self.prob[u]):
+                    ma = u
+                if (ra2 > self.prob[u - 1] and ra2 <= self.prob[u]): 
+                    pa = u
 
-            if (self.rand() < self.pulseRate):
-                update_p = True
-            if (self.rand() < self.loudness):
-                update_l = True
-   
-            # update the frequency
-            self.solutions[0].freq = self.uniform(self.fmin, self.fmax)
-    
-            # Loop on dimension
-            for j in range(0, self.searchSpace.dimension):
+            for k in range(0, self.searchSpace.dimension):
+                beta = self.rand()
+                self.solutions[self.size - 1 - i][k] = self.solutions[ma][k] - beta * (self.solutions[ma][k] - self.solutions[pa][k])
+                self.solutions[self.size - 2 - i][k] = self.solutions[pa][k] + beta * (self.solutions[ma][k] - self.solutions[pa][k])
 
-                # update position and velocity
-                self.solutions[0].velocity[j] = self.solutions[0].velocity[j] + (self.solutions[0][j] - self.bestSolution[j])*self.solutions[0].freq
-                self.solutions[0][j] = self.solutions[0][j] + self.solutions[0].velocity[j]
-                
-                # improving the best solution
-                if (update_p == True):
-                    self.solutions[0][j] = self.bestSolution[j] + self.uniform(-1., 1.)*self.loudness
-                
-            # boundary check
-            self.checkBoundary(0)
-            
-            # evaluate tmp
-            self.evaluateCost(0)
-            
-            # conditionally save of the new solution
-            if (update_l == True and self.solutions[0].cost < self.solutions[i].cost):
-                self.solutions[i] = copy.deepcopy(self.solutions[0])
-
-            # update the best solution
-            # this is done automatically when evaluating tmp
-        
-        # remove the temporary solution
-        self.solutions.pop(0)
-
-
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class BAT(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, initialLoudness: float = 1.5, 
-                 alpha: float = 0.95, initialPulseRate: float = 0.5, gamma: float = 0.9,
-                 fmin: float = 0., fmax: float = 2.) -> None:
+    def mutation(self):
+        mutat = int(self.mutation_rate * self.size * self.searchSpace.dimension)
+
+        for i in range(0, mutat):
+            ra1 = self.randomInt(0, self.searchSpace.dimension)
+            ra2 = self.randomInt(1, self.size)
+            self.solutions[ra2][ra1] = self.searchSpace.randomParameter(ra1)
+            self.solutions[ra2].setIndicatorDown()
+
+
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+#_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+class GA(Algorithm):
+
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def __init__(self, obj_function, population: Population, 
+                 keep_fraction: float = 0.4, mutation_rate: float = 0.1) -> None:
         super().__init__(obj_function)
-        self.population = BATPopulation(population, initialLoudness, 
-                 alpha, initialPulseRate, gamma, fmin, fmax)
+        self.population = GAPopulation(population, keep_fraction, mutation_rate)
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -149,6 +143,9 @@ class BAT(Algorithm):
             # Evaluate the cost for the population
             self.population.evaluate()
             
+        # sort the population
+        self.population.sort()
+            
         # Update the cost history
         self.costHistory = np.append(self.costHistory, self.population.bestSolution.cost)
 
@@ -163,14 +160,17 @@ class BAT(Algorithm):
             # constrained optimization
             self.population.scalePenaltyCoeff()
 
-            # update the a parameter
-            self.population.updateParameters(nIter)
-            
-            # move the whales
-            self.population.moveBats()
-            
-            # Evaluate the cost for the population
+            # mating, crossover, evaluate and sort
+            self.population.crossover()
+
+            # mutation
+            self.population.mutation()
+
+            # evaluate the cost for the population
             self.population.evaluate()
+
+            # sort the population
+            self.population.sort()
             
             # Update the cost history
             self.costHistory = np.append(self.costHistory, self.population.bestSolution.cost)
@@ -192,7 +192,7 @@ class BAT(Algorithm):
                     break
         
         # write the results
-        self.result = OptResult("BAT", nIter, self.population.size, self.population.config,
+        self.result = OptResult("GA", nIter, self.population.size, self.population.config,
                                 self.population.bestSolution, self.population.searchSpace.parameters)
         
 
