@@ -56,5 +56,16 @@ class SearchSpace:
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    def randomVelocity(self, alpha: float = 1.) -> np.array:
+        gen_vel = np.zeros(self.dimension)
+        
+        for i in range(0, self.dimension):
+            delta = self.parameters[i].max_val - self.parameters[i].min_val
+            gen_vel[i] = random.uniform(-delta*alpha, delta*alpha)
+            
+        return gen_vel
+        
+
+    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __getitem__(self, index: int):
         return self.parameters[index]

@@ -9,34 +9,39 @@ from evomip.Population import Population
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class GSAIndividual(Individual):
+class PSIndividual(Individual):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def __init__(self, position: np.array) -> None:
         super().__init__(position)
         self.hasVelocity = True
-        self.mass: float = 0.
+        self.position_best = np.copy(position)
+        self.cost_best = np.inf
         
         
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class GSAPopulation(Population):
+class PSPopulation(Population):
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, population: Population, grav: float, 
-                 grav_evolution: float) -> None:
+    def __init__(self, population: Population, alpha_vel: float, 
+                 alpha_evolution: float, cognitive: float, 
+                 social: float, inertia: float) -> None:
         super().__init__(population.size, population.objectiveFunction, 
                          population.searchSpace, population.config)
-        self.solutions = [GSAIndividual(np.empty(self.searchSpace.dimension))] * self.size
-        self.grav = grav
-        self.grav_evolution = grav_evolution
+        self.solutions       = [PSIndividual(np.empty(self.searchSpace.dimension))] * self.size
+        self.alpha           = alpha_vel         # Maximum velocity in % of the range of parameters
+        self.alpha_evolution = alpha_evolution   # Parameter involved in updating velocities with iterations
+        self.social          = social            # Social parameter
+        self.cognitive       = cognitive         # Cognitive parameter
+        self.inertia         = inertia           # Inertia factor
         
         
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def initRandom(self) -> None:
         self.n_valid_solutions = 0
         for i in range(0, self.size):
-            self.solutions[i] = Individual(self.searchSpace.random())
-            self.solutions[i].velocity = self.searchSpace.randomVelocity()
+            self.solutions[i] = PSIndividual(self.searchSpace.random())
+            self.solutions[i].velocity = self.searchSpace.randomVelocity(self.alpha)
             if (self.checkViolateConstraints(i) == False):
                 self.n_valid_solutions += 1
                 
@@ -62,79 +67,38 @@ class GSAPopulation(Population):
             if (self.checkViolateConstraints(i) == False):
                 self.bestSolution = copy.deepcopy(self.solutions[i])
 
-
-    #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def changeMasses(self) -> None:
-        sum_mass = 0.
-        mass = []
-
-        worst_cost = self.solutions[self.size-1].cost
-        best_cost = self.solutions[0].cost
-        delta_mass = worst_cost - best_cost
-
-        # Loop on the population
-        for i in range(0, self.size):
-            mass.append((worst_cost - self.solutions[i].cost)/delta_mass)
-            sum_mass += mass[i]
-        
-        # Loop on the population
-        for i in range(0, self.size):
-            self.solutions[i].mass = mass[i]/sum_mass
-         
-  
+           
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def changeVelocities(self, t: int, nmax_iter: int):
-        grav = self.grav * math.exp(-self.grav_evolution * t / nmax_iter)
+        inertia = self.inertia * (1.0 - 0.5 * t / nmax_iter)
+        alpha = self.alpha * math.pow(1.0 - (t/nmax_iter), self.alpha_evolution)
 
-        Kbest = self.size * (nmax_iter - t) / nmax_iter
-        accel = 0.
+        for j in range(self.searchSpace.dimension):
+            delta = self.searchSpace[j].getMax() - self.searchSpace[j].getMin()
 
-        # compute the distances between planets
-        distance = np.zeros((self.size, self.size))
-        
-        # Loop on the population
-        for i in range(0, self.size):
-            # Loop on the population
-            for j in range(0, self.size):
-            
-                if (i < j):
-                    for v in range(self.searchSpace.dimension):
-                        distance[i][j] += np.power(self.solutions[j][v] - self.solutions[i][v], 2)
-                    distance[i][j] = np.sqrt(distance[i][j])
+            for i in range(0, self.size):
+                # Compute the step and assign if it satisfies the constraint on the maximum velocity
+                cognitive = self.cognitive * self.rand() * (self.solutions[i].position_best[j] - self.solutions[i][j])
+                social = self.social * self.rand() * (self.bestSolution[j] - self.solutions[i][j])
+                vel = (self.solutions[i].velocity[j] * inertia + cognitive + social)
+
+                if (abs(vel) < alpha * delta):
+                    self.solutions[i].velocity[j] = vel
+                elif (vel > alpha * delta):
+                    self.solutions[i].velocity[j] = alpha * delta
                 else:
-                    distance [i][j] = distance [j][i]
-            
-        
-
-        # compute the resulting acceleration of the i-planet due to the external gravitational forces
-        for i in range(0, self.size):
-            for k in range(self.searchSpace.dimension):
-                ref_accel = 0.
-                for j in range(0, self.size):
-                    if (distance[i][j] > 0. and j < Kbest):
-                        accel = grav * self.solutions[j].mass / (distance[i][j]) * (self.solutions[j][k] - self.solutions[i][k])
-                        ref_accel += self.rand() * accel
-
-                # compute the velocity taking into account the previous velocity and the forces applied
-                vel = self.solutions[i].velocity[k] * self.rand() + ref_accel
-
-                self.solutions[i].velocity[k] = vel
+                    self.solutions[i].velocity[j] = -alpha * delta
     
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def movePlanets(self, t: int, nmax_iter: int) -> None:
-        # change the mass of the planets
-        self.changeMasses()
-
-        # change the velocity of planets
+    def moveParticles(self, t: int, nmax_iter: int) -> None:
+        # Change the velocity of the particles
         self.changeVelocities(t, nmax_iter)
 
-        # Loop on the population
         for i in range(0, self.size):
-            # Loop on dimension
-            for j in range(0, self.searchSpace.dimension):
+            for j in range(self.searchSpace.dimension):
                 self.solutions[i][j] = self.solutions[i][j] + self.solutions[i].velocity[j]
-
+            
             # boundary check
             self.checkBoundary(i)
 
@@ -142,13 +106,15 @@ class GSAPopulation(Population):
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-class GSA(Algorithm):
+class PS(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, grav: float = 1000., 
-                 grav_evolution: float = 20.) -> None:
+    def __init__(self, obj_function, population: Population, alpha_vel: float = 0.5, 
+                 alpha_evolution: float = 1.0, cognitive: float = 2.0, 
+                 social: float = 2.0, inertia: float = 0.9) -> None:
         super().__init__(obj_function)
-        self.population = GSAPopulation(population, grav, grav_evolution)
+        self.population = PSPopulation(population, alpha_vel, 
+                 alpha_evolution, cognitive, social, inertia)
 
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -181,8 +147,8 @@ class GSA(Algorithm):
             # sort the population
             self.population.sort()
 
-            # move the planets
-            self.population.movePlanets(nIter, maxIter)
+            # move the particles
+            self.population.moveParticles(nIter, maxIter)
 
             # Evaluate the cost for the population
             self.population.evaluate()
@@ -207,7 +173,7 @@ class GSA(Algorithm):
                     break
 
         # write the results
-        self.result = OptResult("GSA", nIter, self.population.size, self.population.config,
+        self.result = OptResult("PS", nIter, self.population.size, self.population.config,
                                 self.population.bestSolution, self.population.searchSpace.parameters)
         
 
