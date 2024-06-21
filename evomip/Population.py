@@ -31,7 +31,7 @@ class Population:
                  searchSpace: SearchSpace, config: Config = Config()) -> None:
 
         self.objectiveFunction = objective_function
-
+        
         # search space
         self.searchSpace = searchSpace
         

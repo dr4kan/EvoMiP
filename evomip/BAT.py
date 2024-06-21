@@ -143,10 +143,10 @@ class BATPopulation(Population):
 class BAT(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, initialLoudness: float = 1.5, 
+    def __init__(self, population: Population, initialLoudness: float = 1.5, 
                  alpha: float = 0.95, initialPulseRate: float = 0.5, gamma: float = 0.9,
                  fmin: float = 0., fmax: float = 2.) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = BATPopulation(population, initialLoudness, 
                  alpha, initialPulseRate, gamma, fmin, fmax)
 
@@ -172,7 +172,7 @@ class BAT(Algorithm):
             self.population.fillHistory()
         
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

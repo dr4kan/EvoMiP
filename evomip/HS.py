@@ -103,9 +103,9 @@ class HSPopulation(Population):
 class HS(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, considering_rate: float = 0.5, 
+    def __init__(self, population: Population, considering_rate: float = 0.5, 
                  adjusting_rate: float = 0.5, distance_bandwidth: float = 0.1) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = HSPopulation(population, considering_rate, adjusting_rate, distance_bandwidth)
 
 
@@ -133,7 +133,7 @@ class HS(Algorithm):
             self.population.fillHistory()
 
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

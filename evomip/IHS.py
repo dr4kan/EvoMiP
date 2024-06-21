@@ -115,11 +115,11 @@ class IHSPopulation(Population):
 class IHS(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, considering_rate: float = 0.5, 
+    def __init__(self, population: Population, considering_rate: float = 0.5, 
                  adjusting_rate: float = 0.5, distance_bandwidth: float = 0.1,
                  min_adjusting_rate: float = 0.3, max_adjusting_rate: float = 0.99,
                  min_distance_bandwidth: float = 1e-04, max_distance_bandwidth: float = 1) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = IHSPopulation(population, considering_rate, adjusting_rate, distance_bandwidth,
                                         min_adjusting_rate, max_adjusting_rate, min_distance_bandwidth,
                                         max_distance_bandwidth)
@@ -149,7 +149,7 @@ class IHS(Algorithm):
             self.population.fillHistory()
 
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

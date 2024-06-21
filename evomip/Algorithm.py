@@ -30,7 +30,7 @@ class OptResult:
     algo: str
     nIter: int
     popSize: int
-    config:  Config
+    config: Config
     bestSolution: Individual
     parameters: list[Parameter]
     

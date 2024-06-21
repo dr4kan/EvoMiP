@@ -207,9 +207,9 @@ class ABCPopulation(Population):
 class ABC(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, employedFraction: float = 0.5,
+    def __init__(self, population: Population, employedFraction: float = 0.5,
                  nScouters: int = 1) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = ABCPopulation(population, employedFraction, nScouters)
 
 
@@ -234,7 +234,7 @@ class ABC(Algorithm):
             self.population.fillHistory()
         
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

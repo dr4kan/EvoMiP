@@ -160,9 +160,9 @@ class GSAPopulation(Population):
 class GSA(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, grav: float = 1000., 
+    def __init__(self, population: Population, grav: float = 1000., 
                  grav_evolution: float = 20.) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = GSAPopulation(population, grav, grav_evolution)
 
 
@@ -187,7 +187,7 @@ class GSA(Algorithm):
             self.population.fillHistory()
 
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

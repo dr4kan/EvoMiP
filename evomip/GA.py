@@ -139,9 +139,9 @@ class GAPopulation(Population):
 class GA(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, 
+    def __init__(self, population: Population, 
                  keep_fraction: float = 0.4, mutation_rate: float = 0.1) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = GAPopulation(population, keep_fraction, mutation_rate)
 
 
@@ -169,7 +169,7 @@ class GA(Algorithm):
             self.population.fillHistory()
         
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

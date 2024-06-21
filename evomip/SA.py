@@ -178,10 +178,10 @@ class SAPopulation(Population):
 class SA(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population, T0: float = 50., 
+    def __init__(self, population: Population, T0: float = 50., 
                  Ns: float = 3., Nt: float = 3., c_step: float = 2., 
                  Rt: float = 0.85, Wmin: float = 0.25, Wmax: float = 1.25) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = SAPopulation(population, T0, Ns, Nt, c_step, 
                                        Rt, Wmin, Wmax)
 
@@ -210,7 +210,7 @@ class SA(Algorithm):
             self.population.fillHistory()
         
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

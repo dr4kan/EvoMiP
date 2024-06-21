@@ -86,7 +86,7 @@ class Config:
                  oobMethod: str = "RBC", constraintsMethod: str = "BAR",
                  penalty_coeff: float = 2., penalty_scaling: float = 10.,
                  max_penalty_param: float = 1.e10, seed: int = 0,
-                 min_valid_solutions: int = 0) -> None:
+                 min_valid_solutions: int = 0, progressBar: bool = False) -> None:
         # general
         self.nmax_iter = nmax_iter
         self.nmax_iter_same_cost = nmax_iter_same_cost

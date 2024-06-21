@@ -108,8 +108,8 @@ class MFOPopulation(Population):
 class MFO(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population) -> None:
-        super().__init__(obj_function)
+    def __init__(self, population: Population) -> None:
+        super().__init__(population.objectiveFunction)
         self.population = MFOPopulation(population)
 
 
@@ -134,7 +134,7 @@ class MFO(Algorithm):
             self.population.fillHistory()
 
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization

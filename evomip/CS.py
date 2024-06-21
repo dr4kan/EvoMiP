@@ -106,9 +106,9 @@ class CSPopulation(Population):
 class CS(Algorithm):
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    def __init__(self, obj_function, population: Population,
+    def __init__(self, population: Population,
                  discovery_rate: float = 0.25, step_size: float = 1.0) -> None:
-        super().__init__(obj_function)
+        super().__init__(population.objectiveFunction)
         self.population = CSPopulation(population, discovery_rate, step_size)
 
 
@@ -136,7 +136,7 @@ class CS(Algorithm):
             self.population.fillHistory()
 
         n_sc = 0
-        for nIter in tqdm(range(0, maxIter)):
+        for nIter in tqdm(range(0, maxIter), disable = self.population.config.silent):
 
             # scale the penalty coefficient for
             # constrained optimization
