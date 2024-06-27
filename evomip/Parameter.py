@@ -69,11 +69,10 @@ class Parameter:
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-def createListParameters(n: int, minVal: float, maxVal: float, integer: bool = False) -> list[Parameter]:
-    l = []
-    name = "x"
+def createListParameters(prefix: str, n: int, minVal: float, maxVal: float, integer: bool = False) -> list[Parameter]:
+    l: list[Parameter] = []
     for i in range(0, n):
-        l.append(Parameter(name + str(i), minVal, maxVal, integer))
+        l.append(Parameter(prefix + str(i), minVal, maxVal, integer))
         
     return l
         
