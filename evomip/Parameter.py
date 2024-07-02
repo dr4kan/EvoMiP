@@ -70,6 +70,8 @@ class Parameter:
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 def createListParameters(prefix: str, n: int, minVal: float, maxVal: float, integer: bool = False) -> list[Parameter]:
+    if (prefix == ""):
+        prefix = "x"
     l: list[Parameter] = []
     for i in range(0, n):
         l.append(Parameter(prefix + str(i), minVal, maxVal, integer))

@@ -25,7 +25,7 @@ warnings.filterwarnings("error")
 config = Config(nmax_iter=100, nmax_iter_same_cost=0, seed=101, silent=True)
 
 # search space
-l = createListParameters(2, -5.12, 5.12)
+l = createListParameters("", 2, -5.12, 5.12)
 sspace = SearchSpace(l)
 
 # population
