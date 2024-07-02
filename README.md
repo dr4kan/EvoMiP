@@ -117,6 +117,8 @@ algo.minimize()
 algo.summary()
 ```
 
+### Nonlinear programming with mixed-integer variables
+
 This is a well know benchmark problem:
 
 $\min f(x_1,x_2,x_3,x_4) = 0.6224 x_1x_3x_4 + 1.7781x_2x_3^2 + 3.1661x_1^2x_4 + 19.84x_1^2x_3$
