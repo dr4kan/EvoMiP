@@ -115,5 +115,60 @@ algo.minimize()
 
 # summary of the results
 algo.summary()
+```
+
+### Nonlinear programming with mixed-integer variables
+
+This is a well know benchmark problem:
+
+$\min f(x_1,x_2,x_3,x_4) = 0.6224 x_1x_3x_4 + 1.7781x_2x_3^2 + 3.1661x_1^2x_4 + 19.84x_1^2x_3$
+
+subject to: $g_1(x_1,x_3) = -x_1 + 0.0193x_3 \leq 0$ \
+$g_2(x_2,x_3) = -x_2 + 0.00954x_3 \leq 0$ \
+$g_3(x_3,x_4) = -\pi x_3^2x_4 -\frac{4}{3}\pi x_3^3 + 1296000 \leq 0$
+
+where: $x_1 = 0.0625 \cdot x_1^∗$ with $x_1^∗$ integer \
+$x_2 = 0.0625 \cdot x_2^∗$ with $x_2^∗$ integer
+
+The search space is: $x_1^∗ \in [18, 32]$, $x_2^∗ \in [10, 32]$, $x_3 \in [10, 240]$ and $x_4 \in [10, 240]$
+
+Best solution from <em>Lee and Geem, Comput. Methods Appl. Mech. Eng. 2005, 194(36–38)</em>: <b>7197.730</b>
 
 ```
+import numpy as np
+from evomip.Constraint import Constraint
+from evomip.Parameter import Parameter
+from evomip.SearchSpace import SearchSpace
+from evomip.Population import Population
+from evomip.Config import Config
+from evomip.WOA import WOA
+
+def ob(x: np.array):
+    return 0.6224 * (x[0]*0.0625) * x[2] * x[3] + 1.7781 * (x[1]*0.0625) * x[2]**2 + 3.1611 * (x[0]*0.0625)**2 * x[3] + 19.8621 * (x[0]*0.0625)**2 * x[2]
+
+def g1(x: np.array):
+    return 0.0193*x[2] - (x[0]*0.0625) 
+
+def g2(x: np.array):
+    return 0.00954*x[2] - (x[1]*0.0625) 
+
+def g3(x: np.array):
+    return 1296000 - np.pi * x[2]**2 * x[3] - 4/3 * np.pi * x[2]**3
+
+c1 = Constraint(g1, "<=")
+c2 = Constraint(g2, "<=")
+c3 = Constraint(g3, "<=")
+
+p1 = Parameter("x1*", 18, 32, True)
+p2 = Parameter("x2*", 10, 32, True) 
+p3 = Parameter("x3", 10, 240) 
+p4 = Parameter("x4", 10, 240)
+
+config = Config(nmax_iter=3000, nmax_iter_same_cost=0, seed=110, oobMethod="RBC", 
+                constraintsMethod="BAR", min_valid_solutions = 50)
+sspace = SearchSpace([p1,p2,p3,p4], [c1,c2,c3])
+population = Population(500, ob, sspace, config)
+
+algo = WOA(ob, population)
+algo.minimize()
+algo.summary()
