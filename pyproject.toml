@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "evomip"
-version = "0.4.1"
+version = "0.4.2"
 description = ""
 authors = ["Davide Pagano <davide.pagano@unibs.it>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 
 
 [build-system]
