@@ -73,7 +73,7 @@ class Algorithm:
 
     #_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     def summary(self) -> None:
-        print("\n       EmiP Minimization Results")
+        print("\n       EvoMiP Minimization Results")
         print("--------------------------------------------")
         print("         minimizer | ", self.result.algo, sep = "") 
         print("        iterations | ", self.result.nIter+1, sep = "") 
