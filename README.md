@@ -169,6 +169,6 @@ config = Config(nmax_iter=3000, nmax_iter_same_cost=0, seed=110, oobMethod="RBC"
 sspace = SearchSpace([p1,p2,p3,p4], [c1,c2,c3])
 population = Population(500, ob, sspace, config)
 
-algo = WOA(ob, population)
+algo = WOA(population)
 algo.minimize()
 algo.summary()
